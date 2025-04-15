@@ -6,19 +6,19 @@ import AuthPage from './AuthPage';
 import Dashboard from './Components/Dashboard';
 
 function App() {
-  const [session, setSession] = useState(null)
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-    })
+      setSession(session);
+    });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
+      setSession(session);
+    });
 
     return () => listener.subscription.unsubscribe()
-  }, [])
+  }, []);
 
   return (
     <Router>

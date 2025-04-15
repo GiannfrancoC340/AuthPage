@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
 
 export default function Dashboard() {
-  const [user, setUser] = useState(null)
-  const [message, setMessage] = useState('')
-  const [messages, setMessages] = useState([])
+  const [user, setUser] = useState(null);
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState([]);
 
   useEffect(() => {
     async function getUserData() {
