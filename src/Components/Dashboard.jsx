@@ -8,29 +8,39 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function getUserData() {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      fetchMessages()
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) console.error('Error fetching user:', error);
+      setUser(user);
+      fetchMessages();
     }
-    getUserData()
-  }, [])
+    getUserData();
+  }, []);
 
   const fetchMessages = async () => {
-    const { data } = await supabase.from('messages').select('*').order('id', { ascending: false })
-    setMessages(data)
-  }
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .order('id', { ascending: false });
+
+    if (error) console.error('Error fetching messages:', error);
+    else setMessages(data);
+  };
 
   const handleSubmit = async () => {
-    if (message) {
-      await supabase.from('messages').insert([{ content: message, user_id: user.id }])
-      setMessage('')
-      fetchMessages()
+    if (!user || !message.trim()) return;
+    const { error } = await supabase
+      .from('messages')
+      .insert([{ content: message, user_id: user.id }]);
+    if (error) console.error('Error sending message:', error);
+    else {
+      setMessage('');
+      fetchMessages();
     }
-  }
+  };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-  }
+    await supabase.auth.signOut();
+  };
 
   return (
     <div style={{ padding: '20px' }}>
@@ -38,14 +48,22 @@ export default function Dashboard() {
       <button onClick={handleLogout}>Logout</button>
 
       <h3>Post a message:</h3>
-      <input value={message} onChange={(e) => setMessage(e.target.value)} />
+      <input
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        placeholder="Type a message..."
+      />
       <button onClick={handleSubmit}>Send</button>
 
+      <h3>Messages:</h3>
       <ul>
         {messages.map((msg) => (
-          <li key={msg.id}>{msg.content}</li>
+          <li key={msg.id}>
+            <strong>{msg.user_id.slice(0, 6)}:</strong> {msg.content}
+          </li>
         ))}
       </ul>
     </div>
-  )
-};
+  );
+}
+
