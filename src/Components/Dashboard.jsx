@@ -47,8 +47,6 @@ export default function Dashboard() {
         console.error('Error fetching messages:', error);
       } else {
         console.log('Messages fetched:', data);
-        console.log('Messages count:', data ? data.length : 0);
-        console.log('First message (if any):', data && data.length > 0 ? data[0] : 'No messages');
         setMessages(data || []);
       }
     } catch (err) {
@@ -110,7 +108,7 @@ export default function Dashboard() {
         <ul style={{ listStyleType: 'none', padding: 0 }}>
           {messages.map((msg) => (
             <li key={msg.id} style={{ marginBottom: '10px', padding: '10px', borderRadius: '5px', backgroundColor: '#f5f5f5' }}>
-              <strong>{msg.user_id ? msg.user_id.slice(0, 6) : 'Unknown'}:</strong> {msg.content}
+              <strong>{msg.user_id === user?.id ? 'You' : user?.email.split('@')[0]}:</strong> {msg.content}
             </li>
           ))}
         </ul>
