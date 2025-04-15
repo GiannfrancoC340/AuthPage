@@ -6,14 +6,39 @@ export default function Dashboard() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Store user details from initial login
+  const [currentUserEmail, setCurrentUserEmail] = useState('');
 
   useEffect(() => {
     async function getUserData() {
       const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) console.error('Error fetching user:', error);
-      setUser(user);
+      if (error) {
+        console.error('Error fetching user:', error);
+      } else {
+        setUser(user);
+        setCurrentUserEmail(user.email);
+        
+        // Store this user's email in localStorage for display purposes
+        try {
+          // Get existing users from localStorage
+          const storedUsers = JSON.parse(localStorage.getItem('chatUsers') || '{}');
+          
+          // Add or update this user
+          storedUsers[user.id] = {
+            email: user.email,
+            lastSeen: new Date().toISOString()
+          };
+          
+          // Save back to localStorage
+          localStorage.setItem('chatUsers', JSON.stringify(storedUsers));
+        } catch (err) {
+          console.error('Error updating localStorage:', err);
+        }
+      }
       fetchMessages();
     }
+    
     getUserData();
 
     // Set up a subscription to listen for new messages
@@ -65,7 +90,9 @@ export default function Dashboard() {
         .insert([{ 
           content: message, 
           user_id: user.id,
-          created_at: new Date().toISOString() 
+          created_at: new Date().toISOString(),
+          // Store the email directly in the message for easy retrieval
+          user_email: user.email
         }]);
         
       if (error) {
@@ -83,9 +110,35 @@ export default function Dashboard() {
     await supabase.auth.signOut();
   };
 
+  // Function to get display name for a user
+  const getDisplayName = (msg) => {
+    // First priority: current user
+    if (msg.user_id === user?.id) {
+      return 'You';
+    }
+    
+    // Second priority: email stored with message
+    if (msg.user_email) {
+      return msg.user_email.split('@')[0];
+    }
+    
+    // Third priority: check localStorage history
+    try {
+      const storedUsers = JSON.parse(localStorage.getItem('chatUsers') || '{}');
+      if (storedUsers[msg.user_id]?.email) {
+        return storedUsers[msg.user_id].email.split('@')[0];
+      }
+    } catch (err) {
+      console.error('Error reading from localStorage:', err);
+    }
+    
+    // Fallback to user ID
+    return msg.user_id.slice(0, 6);
+  };
+
   return (
     <div style={{ padding: '20px' }}>
-      <h2>Welcome, {user?.email}</h2>
+      <h2>Welcome, {currentUserEmail}</h2>
       <button onClick={handleLogout}>Logout</button>
 
       <h3>Post a message:</h3>
@@ -107,8 +160,8 @@ export default function Dashboard() {
       ) : (
         <ul style={{ listStyleType: 'none', padding: 0 }}>
           {messages.map((msg) => (
-            <li key={msg.id} style={{ marginBottom: '10px', padding: '10px', borderRadius: '5px', backgroundColor: '#f5f5f5' }}>
-              <strong>{msg.user_id === user?.id ? 'You' : user?.email.split('@')[0]}:</strong> {msg.content}
+            <li key={msg.id} style={{ marginBottom: '10px', padding: '10px', borderRadius: '5px', backgroundColor: msg.user_id === user?.id ? '#e6f7ff' : '#f5f5f5' }}>
+              <strong>{getDisplayName(msg)}:</strong> {msg.content}
             </li>
           ))}
         </ul>
