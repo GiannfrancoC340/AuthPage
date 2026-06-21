@@ -18,23 +18,6 @@ export default function Dashboard() {
       } else {
         setUser(user);
         setCurrentUserEmail(user.email);
-        
-        // Store this user's email in localStorage for display purposes
-        try {
-          // Get existing users from localStorage
-          const storedUsers = JSON.parse(localStorage.getItem('chatUsers') || '{}');
-          
-          // Add or update this user
-          storedUsers[user.id] = {
-            email: user.email,
-            lastSeen: new Date().toISOString()
-          };
-          
-          // Save back to localStorage
-          localStorage.setItem('chatUsers', JSON.stringify(storedUsers));
-        } catch (err) {
-          console.error('Error updating localStorage:', err);
-        }
       }
       fetchMessages();
     }
@@ -120,16 +103,6 @@ export default function Dashboard() {
     // Second priority: email stored with message
     if (msg.user_email) {
       return msg.user_email.split('@')[0];
-    }
-    
-    // Third priority: check localStorage history
-    try {
-      const storedUsers = JSON.parse(localStorage.getItem('chatUsers') || '{}');
-      if (storedUsers[msg.user_id]?.email) {
-        return storedUsers[msg.user_id].email.split('@')[0];
-      }
-    } catch (err) {
-      console.error('Error reading from localStorage:', err);
     }
     
     // Fallback to user ID
